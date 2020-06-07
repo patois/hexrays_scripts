@@ -16,7 +16,7 @@ The find_expr() function accepts two arguments:
 ```
 Please also check out the [HRDevHelper](https://github.com/patois/HRDevHelper) plugin which may assist in writing respective queries.
 
-A simple example, which finds and returns all function calls within
+A simple example which finds and returns all function calls within
 a current function: ```find_expr(here(), "e.op is cot_call")```
 
 ## Examples:
@@ -49,7 +49,26 @@ l = [e for e in find_expr(here(), query)]
 query = "e.op is cot_call and e.x.op is cot_obj"
 l = ["%x: %s" % (e.x.obj_ea, get_name(e.x.obj_ea)) for e in find_expr(here(), query)]
 ```
-### 4) get list of allocated and freed heaps:
+### 4) print list of memcpy calls where "dst" argument is on stack
+```
+        cot_call --- arg1 is cot_var
+         /           arg1 is on stack
+      x /
+ cot_obj --- name(obj_ea) == 'memcpy'
+```
+```
+hits = []
+query = """e.op is cot_call and
+           e.x.op is cot_obj and
+           get_name(e.x.obj_ea) == 'memcpy' and
+           len(e.a) == 3 and
+           e.a[0].op is cot_var and
+           cfunc.lvars[e.a[0].v.idx].is_stk_var()"""
+for ea in Functions():
+    hits += ["%x:" % e.ea for e in find_expr(ea, query)]
+print(hits)
+```
+### 5) get list of allocated and freed heaps:
 ```
 var = malloc(num):
 
@@ -87,7 +106,7 @@ vars_freed = [e.a[0].v.idx for e in find_expr(ea, query)]
 print("allocated:\t", sorted(vars_allocated))
 print("freed:\t", sorted(vars_freed))
 ```
-### 5) get list of calls to sprintf(str, fmt, ...) where fmt contains "%s"
+### 6) get list of calls to sprintf(str, fmt, ...) where fmt contains "%s"
 ```
         cot_call --- arg2 ('fmt') contains '%s'
          /
