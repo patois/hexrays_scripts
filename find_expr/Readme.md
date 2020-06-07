@@ -5,6 +5,7 @@ available a "find_expr()" function to the IDAPython
 CLI and the script interpreter (shift-f2).
 
 The find_expr() function accepts two arguments:
+```
     ea:   address of a valid function within
           the current database
     expr: string containing a valid Python expression.
@@ -12,8 +13,8 @@ The find_expr() function accepts two arguments:
           eval() function and may (rather: is supposed to)
           access the "e" structure, whose type is "cexpr_t".
           Find "struct cexpr_t" within hexrays.hpp for details.
-          Please also check out the [HRDevHelper](https://github.com/patois/HRDevHelper) plugin which
-          may assist in writing respective queries.
+```
+Please also check out the [HRDevHelper](https://github.com/patois/HRDevHelper) plugin which may assist in writing respective queries.
 
 A simple example, which finds and returns all function calls within
 a current function: ```find_expr(here(), "e.op is cot_call")```
