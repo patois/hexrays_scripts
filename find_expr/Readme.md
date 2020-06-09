@@ -1,6 +1,9 @@
-# find_expr
+# Hexrays Toolbox
 
-Loading this script with IDA (alt-f7) will make
+Hexrays Toolbox is a script for the Hexrays Decompiler which
+can be used to find code patterns within decompiled code.
+
+Loading hr_toolbox.py with IDA (alt-f7) will make
 available a "find_expr()" function to the IDAPython
 CLI and the script interpreter (shift-f2).
 
