@@ -2,6 +2,14 @@ from hr_toolbox import find_expr
 from idaapi import *
 
 # ----------------------------------------------------------------------------
+def find_calls():
+    """find function calls"""
+    query = lambda cf, e: (e.op is cot_call and
+        e.x.op is cot_obj)
+
+    return _db_exec_query(query)
+
+# ----------------------------------------------------------------------------
 def find_memcpy():
     """find calls to memcpy() where the 'n' argument
     is signed"""
@@ -57,6 +65,26 @@ def _exec_query(query, ea_list):
     for ea in ea_list:
         result += [e for e in find_expr(ea, query)]
     return result
+
+# ----------------------------------------------------------------------------
+def qdb(query, fmt=lambda x:"%x: %s" % (x.ea, tag_remove(x.print1(None)))):
+    r = _db_exec_query(query)
+    try:
+        for e in r:
+            print(fmt(e))
+    except:
+        print("<qdb> error!")
+    return
+
+# ----------------------------------------------------------------------------
+def q(query, ea_list=[here()], fmt=lambda x:"%x: %s" % (x.ea, tag_remove(x.print1(None)))):
+    r = _exec_query(query, ea_list)
+    try:
+        for e in r:
+            print(fmt(e))
+    except:
+        print("<q> error!")
+    return
 
 # ----------------------------------------------------------------------------
 def d(f, fmt=lambda x:"%x: %s" % (x.ea, tag_remove(x.print1(None)))):
