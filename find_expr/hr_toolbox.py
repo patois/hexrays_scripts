@@ -4,6 +4,47 @@ import ida_bytes, idautils, ida_kernwin, ida_lines
 __author__ = "https://github.com/patois"
 
 # ----------------------------------------------------------------------------
+def find_item(ea, item, findall=True, parents=False):
+    """find item within AST of decompiled function"""
+
+    class citem_finder_t(hr.ctree_visitor_t):
+        def __init__(self, cfunc, i, parents):
+            hr.ctree_visitor_t.__init__(self,
+                hr.CV_PARENTS if parents else hr.CV_FAST)
+
+            self.findall = findall
+            self.cfunc = cfunc
+            self.item = i
+            self.found = list()
+            return
+
+        def process(self, i):
+            cfunc = self.cfunc
+            if self.item(cfunc, i):
+                self.found.append(i)
+                if not self.findall:
+                    return 1
+            return 0
+
+        def visit_insn(self, i):
+            return self.process(i)
+
+        def visit_expr(self, e):
+            return self.process(e)
+
+    try:
+        cfunc = hr.decompile(ea)
+    except:
+        print("%x: unable to decompile." % ea)
+        return list()
+
+    if cfunc:
+        itfinder = citem_finder_t(cfunc, item, parents)
+        itfinder.apply_to(cfunc.body, None)
+        return itfinder.found
+    return list()
+
+# ----------------------------------------------------------------------------
 def find_expr(ea, expr, findall=True, parents=False):
     """find expr within AST of decompiled function"""
 
@@ -15,7 +56,7 @@ def find_expr(ea, expr, findall=True, parents=False):
             self.findall = findall
             self.cfunc = cfunc
             self.expr = expr
-            self.found = []
+            self.found = list()
             return
 
         def visit_expr(self, e):
@@ -30,11 +71,13 @@ def find_expr(ea, expr, findall=True, parents=False):
         cfunc = hr.decompile(ea)
     except:
         print("%x: unable to decompile." % ea)
-        return []
+        return list()
 
-    ef = expr_finder_t(cfunc, expr, parents)
-    ef.apply_to_exprs(cfunc.body, None)
-    return ef.found
+    if cfunc:
+        expfinder = expr_finder_t(cfunc, expr, parents)
+        expfinder.apply_to_exprs(cfunc.body, None)
+        return expfinder.found
+    return list()
 
 # ----------------------------------------------------------------------------
 def db_exec_query(query):
@@ -43,9 +86,9 @@ def db_exec_query(query):
     returns list of cexpr_t
     """
 
-    result = []
+    result = list()
     for ea in idautils.Functions():
-        result += [e for e in find_expr(ea, query)]
+        result += [e for e in find_item(ea, query)]
     return result
 
 # ----------------------------------------------------------------------------
@@ -55,9 +98,9 @@ def exec_query(query, ea_list):
     returns list of cexpr_t
     """
 
-    result = []
+    result = list()
     for ea in ea_list:
-        result += [e for e in find_expr(ea, query)]
+        result += [e for e in find_item(ea, query)]
     return result
 
 # ----------------------------------------------------------------------------
