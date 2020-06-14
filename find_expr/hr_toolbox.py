@@ -29,7 +29,7 @@ Use Cases:
 
 Example scenarios:
 ------------------
-Load and run the accompanied script 'example_queries.py' into IDA (Shift-F2) 
+Load and run the accompanied script 'example_queries.py' with IDA (Shift-F2) 
 
 Todo:
 -----
