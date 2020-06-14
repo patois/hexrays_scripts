@@ -4,11 +4,17 @@ import ida_bytes, idautils, ida_kernwin, ida_lines
 __author__ = "Dennis Elser @ https://github.com/patois"
 
 """
-Proof-of-Concept code for finding code patterns with IDA Pro / Hexrays decompiler
-=================================================================================
+Hexrays Toolbox - IDAPython plugin for finding code patterns using Hexrays
+==========================================================================
 
-This script allows code patterns to be found within binaries whose processor
-architecture is supported by the Hexrays decompiler (https://www.hex-rays.com/).
+This IDAPython script allows code patterns to be found within binaries whose
+processor architecture is supported by the Hexrays decompiler
+(https://www.hex-rays.com/).
+
+HRDevHelper (https://github.com/patois/HRDevHelper) is a separate IDAPython
+plugin for IDA Pro that visualizes the AST of decompiled code. Its use is
+encouraged in combination with Hexrays Toolbox in order to come up with
+useful queries.
 
 Use Cases:
 ----------
@@ -23,7 +29,7 @@ Use Cases:
 
 Example scenarios:
 ------------------
-Please see accompanied script 'example_queries.py'
+Load and run the accompanied script 'example_queries.py' into IDA (Shift-F2) 
 
 Todo:
 -----
