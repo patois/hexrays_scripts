@@ -14,11 +14,16 @@ Use Cases:
 ----------
 - scan binary files for known and unknown vulnerabilities
 - locate code patterns from previously reverse engineered executables
-  within new executable code
+  within newly decompiled code
 - malware variant analysis
 - find code similarities across several binaries
-- find code patterns from one architecture in another
+- find code patterns from one architecture within executable code of another
+  architecture
 - many more, limited (almost) only by the queries you'll come up with ;)
+
+Example scenarios:
+------------------
+Please see accompanied script 'example_queries.py'
 
 Todo:
 -----
@@ -173,7 +178,9 @@ def display(f,
             ida_lines.tag_remove(x.print1(None)))):
     """execute function f and print results according to fmt.
 
-    f is expected to return a list of cexpr_t objects
+    arguments:
+    f:      function that is expected to return a list of citem_t/cexpr_t objects
+    fmt:    lambda/callback-function to be called for formatting output
     """
 
     try:
@@ -187,8 +194,9 @@ def display(f,
 def display_argstr(f, idx):
     """execute function f and print results.
 
-    f is expected to return a list of cexpr_t objects
-    idx is an index into the argument list of a cexpr_t 
+    arguments:
+    f:      function that is expected to return a list of citem_t/cexpr_t objects
+    idx:    index into the argument list of a cexpr_t 
     """
 
     try:
