@@ -72,21 +72,23 @@ def menu():
 
     menu()
 
-    d(find_memcpy)
-    d(find_sprintf)
-    da(find_gpa, 1)
+    d(find_calls) # print function calls
+    d(find_memcpy) # print calls to memcpy() with signed 'n' argument
+    d(find_sprintf) # print calls to sprintf() with "%s" in fmt str
+    da(find_gpa, 1) # print calls to GetProcAddress + imported func name
 
-    qdb(lambda cf, e: e.op is cot_call)
+    qdb(lambda cf, e: e.op is cot_call) # find function calls
     q(lambda cf, e: e.op is cot_call, [here()], lambda e: "%s" % get_name(e.x.obj_ea)[::-1])
     q(lambda cf, e: e.op is cit_if and e.cif.expr.op is cot_land)
 
-    # one (not very elegant) way of locating CVE-2019-3568
+    # one (not very elegant) way of locating CVE-2019-3568 within libwhatsapp.so
     q(lambda cf, e: (e.op is cit_if and
         e.cif.expr.op is cot_land and
         e.cif.expr.y.op is cot_eq and
         e.cif.expr.y.y.op is cot_num and
         e.cif.expr.y.y.numval() == 51200),
-        ea_list=CodeRefsTo(get_name_ea(BADADDR,"__aeabi_memcpy"), False))
+        ea_list=CodeRefsTo(get_name_ea(BADADDR,"__aeabi_memcpy"), False),
+        full=True)
     """)
     return
 

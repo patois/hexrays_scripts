@@ -1,7 +1,30 @@
 import ida_hexrays as hr
 import ida_bytes, idautils, ida_kernwin, ida_lines
 
-__author__ = "https://github.com/patois"
+__author__ = "Dennis Elser @ https://github.com/patois"
+
+"""
+Proof-of-Concept code for finding code patterns with IDA Pro / Hexrays decompiler
+=================================================================================
+
+This script allows code patterns to be found within binaries whose processor
+architecture is supported by the Hexrays decompiler (https://www.hex-rays.com/).
+
+Use Cases:
+----------
+- scan binary files for known and unknown vulnerabilities
+- locate code patterns from previously reverse engineered executables
+  within new executable code
+- malware variant analysis
+- find code similarities across several binaries
+- find code patterns from one architecture in another
+- many more, limited (almost) only by the queries you'll come up with ;)
+
+Todo:
+-----
+- data flow analysis
+- this should be optimized for speed and rewritten in C/C++ :)
+"""
 
 # ----------------------------------------------------------------------------
 def find_item(ea, item, findall=True, parents=False):
@@ -46,7 +69,7 @@ def find_item(ea, item, findall=True, parents=False):
 
 # ----------------------------------------------------------------------------
 def find_expr(ea, expr, findall=True, parents=False):
-    """find expr within AST of decompiled function"""
+    """find expression within AST of decompiled function"""
 
     class expr_finder_t(hr.ctree_visitor_t):
         def __init__(self, cfunc, expr, parents):
@@ -80,54 +103,63 @@ def find_expr(ea, expr, findall=True, parents=False):
     return list()
 
 # ----------------------------------------------------------------------------
-def db_exec_query(query):
-    """run query on all functions in current db
-
-    returns list of cexpr_t
-    """
-
-    result = list()
-    for ea in idautils.Functions():
-        result += [e for e in find_item(ea, query)]
-    return result
-
-# ----------------------------------------------------------------------------
-def exec_query(query, ea_list):
+def exec_query(q, ea_list, full):
     """run query on list of addresses
 
-    returns list of cexpr_t
+    convenience wrapper function around find_item()
+
+    arguments:
+    q:          python expression
+    ea_list:    iterable of addresses/functions to process
+    full:       False -> find cexpr_t only (faster but doesn't find cinsn_t items)
+                True  -> find citem_t elements, which includes cexpr_t and cinsn_t
+
+    returns list of cexpr_t/citem_t
     """
 
+    find_elem = find_item if full else find_expr
     result = list()
     for ea in ea_list:
-        result += [e for e in find_item(ea, query)]
+        result += [e for e in find_elem(ea, q)]
     return result
 
 # ----------------------------------------------------------------------------
-def query_db(query,
+def query_db(q,
+        full=False,
         fmt=lambda x:"%x: %s" % (x.ea,
             ida_lines.tag_remove(x.print1(None)))):
-    """run query on idb, print results"""
+    """run query on idb, print results
+    
+    arguments:
+    q:          python expression
+    full:       False -> find cexpr_t only (faster but doesn't find cinsn_t items)
+                True  -> find citem_t elements, which includes cexpr_t and cinsn_t
+    fmt:        lambda/callback-function to be called for formatting output
+    """
 
-    r = db_exec_query(query)
-    try:
-        for e in r:
-            print(fmt(e))
-    except:
-        print("<query_db> error!")
-    return
+    return query(q, ea_list=idautils.Functions(), full=full, fmt=fmt)
 
 # ----------------------------------------------------------------------------
-def query(query,
+def query(q,
         ea_list=None,
+        full=False,
         fmt=lambda x:"%x: %s" % (x.ea,
             ida_lines.tag_remove(x.print1(None)))):
-    """run query on list of addresses, print results"""
+    """run query on list of addresses, print results
+
+    arguments:
+    q:          python expression
+    ea_list:    iterable of addresses/functions to process
+    full:       False -> find cexpr_t only (faster but doesn't find cinsn_t items)
+                True  -> find citem_t elements, which includes cexpr_t and cinsn_t
+    fmt:        lambda/callback-function to be called for formatting output
+    """
 
     if not ea_list:
         ea_list = [ida_kernwin.get_screen_ea()]
 
-    r = exec_query(query, ea_list)
+    r = exec_query(q, ea_list=ea_list, full=full)
+    print("<query> done! %d unique hits." % len(r))
     try:
         for e in r:
             print(fmt(e))
@@ -154,7 +186,8 @@ def display(f,
 # ----------------------------------------------------------------------------
 def display_argstr(f, idx):
     """execute function f and print results.
-    
+
+    f is expected to return a list of cexpr_t objects
     idx is an index into the argument list of a cexpr_t 
     """
 
