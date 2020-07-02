@@ -4,9 +4,9 @@ import ida_kernwin as kw
 __author__ = "https://github.com/patois"
 
 def arachno():
-	"""gets textual representation of currently selected identifier
-	from any current IDA view, opens a new browser tab and googles for it
-	"""
+    """gets textual representation of currently selected identifier
+    from any current IDA view, opens a new browser tab and googles for it
+    """
 
     r = kw.get_highlight(kw.get_current_viewer())
     if r:
