@@ -10,6 +10,6 @@ def arachno():
 
     r = kw.get_highlight(kw.get_current_viewer())
     if r:
-        webbrowser.open("http://google.com/search?q=%s" % r[0],new=2)
+        webbrowser.open("https://google.com/search?q=%s" % r[0],new=2)
     
 kw.add_hotkey("Ctrl-Shift-F", arachno)
