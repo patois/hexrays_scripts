@@ -84,8 +84,6 @@ class painter_t(QtCore.QObject):
                 # Send a paint event that we won't intercept
                 self.painting = True
                 try:
-                    pev = QtGui.QPaintEvent(self.target.rect())
-                    QtWidgets.QApplication.instance().sendEvent(self.target, pev)
                     self.pm = QtGui.QPixmap(self.target.size())
                     # render widget to pixmap, side-effect: repaints widget :(
                     self.target.render(self.pm)
