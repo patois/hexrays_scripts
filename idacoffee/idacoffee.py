@@ -25,10 +25,10 @@ class painter_t(QtCore.QObject):
 
     class timercallback_t(object):
         def __init__(self, target, max_val):
-            self.interval = 18
+            self.interval = 10
             self.max_val = max_val
             self.target = target
-            self.lane = [i for i in range(-max_val, max_val+1)] + [i for i in range(max_val-1, max_val, -1)]
+            self.lane = [i for i in range(-max_val, max_val+1)] + [i for i in range(max_val-1, -max_val, -1)]
             self.n = len(self.lane)
             self.i = 0
             self.obj = ida_kernwin.register_timer(self.interval, self)
