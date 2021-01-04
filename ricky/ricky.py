@@ -64,7 +64,7 @@ class png_player_t(QtCore.QObject):
         return [QtGui.QPixmap(file) for file in self.file_list]
 
     def die(self):
-        self.timer.die()
+        self.t.die()
         self.target.removeEventFilter(self)
 
     def eventFilter(self, receiver, event):
@@ -111,6 +111,9 @@ if __name__ == "__main__":
             path = ida_kernwin.ask_str("", ida_kernwin.HIST_DIR, "Please specify path containing png files")
             if path and os.path.exists(path):
                 files = find_files(path, "*.png")
+                print("found %d files" % len(files))
                 if len(files):
-                    pp = png_player_t(title, files)
-                    print("PNGs playing")
+                    interval = ida_kernwin.ask_long(200, "Please specify timer interval")
+                    if interval:
+                        pp = png_player_t(title, files, interval=interval)
+                        print("PNGs playing")
