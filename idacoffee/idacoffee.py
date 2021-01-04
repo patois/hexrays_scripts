@@ -31,7 +31,6 @@ class painter_t(QtCore.QObject):
             self.lane = [i for i in range(-max_val, max_val+1)] + [i for i in range(max_val-1, max_val, -1)]
             self.n = len(self.lane)
             self.i = 0
-            self.angle = 0
             self.obj = ida_kernwin.register_timer(self.interval, self)
             if self.obj is None:
                 raise RuntimeError("Failed to register timer")
@@ -92,9 +91,10 @@ class painter_t(QtCore.QObject):
 
         return QtCore.QObject.eventFilter(self, receiver, event)
 
-try:
-    coffee.die()
-    del coffee
-except:
-    coffee = painter_t()
-    ida_kernwin.msg("Caffeinated\n")
+if __name__ == "__main__":
+    try:
+        coffee.die()
+        del coffee
+    except:
+        coffee = painter_t()
+        ida_kernwin.msg("Caffeinated\n")
