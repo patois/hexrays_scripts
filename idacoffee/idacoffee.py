@@ -8,40 +8,6 @@ import ida_kernwin
 __author__ = "patois"
 
 # -------------------------------------------------------------------------
-class timercallback_t(object):
-    def __init__(self, target, max):
-        self.interval = 10
-        self.max = max
-        self.angle = 0
-        self.target = target
-        self.forward = True
-        self.obj = ida_kernwin.register_timer(self.interval, self)
-        if self.obj is None:
-            raise RuntimeError("Failed to register timer")
-
-    def get_angle(self):
-        return self.angle
-
-    def __call__(self):
-        if self.forward:
-            self.angle += 1
-            if self.angle >= self.max:
-                self.forward = False
-        else:
-            self.angle -= 1
-            if self.angle <= -self.max:
-                self.forward = True
-        try:
-            self.target.repaint()
-        except:
-            return -1
-        return self.interval
-
-    def __del__(self):
-        #print("Timer object disposed %s" % self)
-        pass
-
-# -------------------------------------------------------------------------
 class painter_t(QtCore.QObject):
     def __init__(self):
         QtCore.QObject.__init__(self)
@@ -49,18 +15,44 @@ class painter_t(QtCore.QObject):
         w = ida_kernwin.find_widget("IDA View-%s" % name)
         if not w:
             w = ida_kernwin.open_disasm_window(name)
-        self.target = ida_kernwin.PluginForm.FormToPyQtWidget(w).viewport()
-        self.target.installEventFilter(self)
         self.painting = False
         self.transform = False
+        self.target = ida_kernwin.PluginForm.FormToPyQtWidget(w).viewport()
         self.pm = QtGui.QPixmap(self.target.size())
-        self.timer = timercallback_t(self.target, 2)
+
+        self.target.installEventFilter(self)
+        self.timer = self.timercallback_t(self.target, 2)
+
+    class timercallback_t(object):
+        def __init__(self, target, max_val):
+            self.interval = 18
+            self.max_val = max_val
+            self.target = target
+            self.lane = [i for i in range(-max_val, max_val+1)] + [i for i in range(max_val-1, max_val, -1)]
+            self.n = len(self.lane)
+            self.i = 0
+            self.angle = 0
+            self.obj = ida_kernwin.register_timer(self.interval, self)
+            if self.obj is None:
+                raise RuntimeError("Failed to register timer")
+
+        def get_val(self):
+            return self.lane[self.i]
+
+        def die(self):
+            ida_kernwin.unregister_timer(self.obj)
+
+        def __call__(self):
+            self.i = (self.i + 1) % self.n
+            try:
+                self.target.repaint()
+            except:
+                return -1
+            return self.interval
 
     def die(self):
-        #calling ida_kernwin.unregister_timer(self.timer)
-        #doesn't unregister the timer but setting its interval to -1 does. wtf?
-        self.timer.interval = -1
-        ida_kernwin.unregister_timer(self.timer)
+        self.timer.die()
+        self.target.removeEventFilter(self)
 
     def eventFilter(self, receiver, event):
         if not self.painting and \
@@ -71,7 +63,7 @@ class painter_t(QtCore.QObject):
                 painter = QtGui.QPainter(receiver)
                 #painter.setRenderHints(QtGui.QPainter.Antialiasing)
                 t = QtGui.QTransform()
-                t.rotate(self.timer.get_angle())
+                t.rotate(self.timer.get_val())
                 pixmap_rotated = self.pm.transformed(t)
                 painter.drawPixmap(self.target.rect(), pixmap_rotated)
                 painter.end()
@@ -95,13 +87,14 @@ class painter_t(QtCore.QObject):
                     In order to deal with this situation, we'll issue
                     another repaint() and transform the widget"""
                     self.target.repaint()
+        elif event.type() in [QtCore.QEvent.Close, QtCore.QEvent.Hide]:
+            self.die()
 
         return QtCore.QObject.eventFilter(self, receiver, event)
+
 try:
-    # closing the widget by its window handles
-    # doesn't unregister the timer, but re-running
-    # the script does
     coffee.die()
     del coffee
 except:
     coffee = painter_t()
+    ida_kernwin.msg("Caffeinated\n")
