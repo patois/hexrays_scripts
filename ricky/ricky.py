@@ -22,6 +22,7 @@ def find_files(folder, wc):
 class png_player_t(QtCore.QObject):
     def __init__(self, title, file_list, interval=200):
         QtCore.QObject.__init__(self)
+        self.dead = False        
         w = ida_kernwin.find_widget(title)
         if not w:
             raise RuntimeError("Could not find %s" % title)
@@ -32,7 +33,8 @@ class png_player_t(QtCore.QObject):
         self.interval = interval
 
         self.painting = False
-        self.anim = self._load_img_files()
+        self.anim = None
+        self._load_img_files(self.file_list)
         self.target.installEventFilter(self)
         self.t = self.timercallback_t(self.target, len(self.anim), interval)
 
@@ -62,12 +64,28 @@ class png_player_t(QtCore.QObject):
                 return -1
             return self.interval
 
-    def _load_img_files(self):
-        return [QtGui.QPixmap(file) for file in self.file_list]
+    def _load_img_files(self, files):
+        self.anim = []
+        i = 1
+        ida_kernwin.show_wait_box("HIDECANCEL\nLoading files")
+        try:
+            for file in files:
+                ida_kernwin.replace_wait_box("Loading file %d/%d" % (i, len(files)))
+                self.anim.append(QtGui.QPixmap(file))
+                i += 1
+        except:
+            print("Failed loading file %d/%d" % (i, len(files)))
+        finally:
+            ida_kernwin.hide_wait_box()
+        return
 
     def die(self):
+        self.dead = True
         self.t.die()
         self.target.removeEventFilter(self)
+
+    def is_dead(self):
+        return self.dead
 
     def eventFilter(self, receiver, event):
         if not self.painting and \
@@ -105,31 +123,30 @@ class png_player_t(QtCore.QObject):
 def pp_main():
     global pp
 
-    try:
+    if pp and not pp.is_dead():
         pp.die()
-        del pp
-        print("PNGs stopped playing")
-    except:
-        w = ida_kernwin.get_current_widget()        
-        title = "IDA View-A"
-        if w:
-            title = ida_kernwin.get_widget_title(w)
-        title = ida_kernwin.ask_str(title, 0, "Please specify title of widget")
-        if title:
-            path = ida_kernwin.ask_str("", ida_kernwin.HIST_DIR, "Please specify path containing png files to play back")
-            if path and os.path.exists(path):
-                files = find_files(path, "*.png")
-                print("found %d files" % len(files))
-                if len(files):
-                    interval = ida_kernwin.ask_long(200, "Please specify timer interval")
-                    if interval:
-                        pp = png_player_t(title, files, interval=interval)
-                        print("PNGs playing in widget %s" % title)
+        pp = None
+        return
+    w = ida_kernwin.get_current_widget()        
+    title = "IDA View-A"
+    if w:
+        title = ida_kernwin.get_widget_title(w)
+    title = ida_kernwin.ask_str(title, 0, "Please specify title of widget")
+    if title:
+        path = ida_kernwin.ask_str("", ida_kernwin.HIST_DIR, "Please specify path containing png files to play back")
+        if path and os.path.exists(path):
+            files = find_files(path, "*.png")
+            print("found %d files" % len(files))
+            if len(files):
+                interval = ida_kernwin.ask_long(100, "Please specify timer interval")
+                if interval:
+                    pp = png_player_t(title, files, interval=interval)
+                    print("PNGs playing in widget %s" % title)
 
 try:
     pp
-    ida_kernwin.info("Already installed. Press %s to start/stop recording." % HOTKEY)
+    ida_kernwin.info("Already installed. Press %s to start/stop playback." % HOTKEY)
 except:
+    pp = None
     print("Press %s to start/stop playing PNG files" % HOTKEY)
     ida_kernwin.add_hotkey(HOTKEY, pp_main)
-    pp = None

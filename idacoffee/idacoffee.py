@@ -13,6 +13,7 @@ HOTKEY = "Ctrl-Shift-C"
 class painter_t(QtCore.QObject):
     def __init__(self):
         QtCore.QObject.__init__(self)
+        self.dead = False
         name = "Coffee"
         w = ida_kernwin.find_widget("IDA View-%s" % name)
         if not w:
@@ -55,8 +56,16 @@ class painter_t(QtCore.QObject):
             return self.interval
 
     def die(self):
+        self.dead = True
         self.timer.die()
-        self.target.removeEventFilter(self)
+        try:
+            self.target.removeEventFilter(self)
+        except:
+            pass
+
+    def is_dead(self):
+        return self.dead
+
 
     def eventFilter(self, receiver, event):
         if not self.painting and \
@@ -99,17 +108,16 @@ class painter_t(QtCore.QObject):
 def coffee_main():
     global coffee
 
-    if coffee:
-        coffee.die()
-        del coffee
-        coffee = None
-    else:
-        coffee = painter_t()
-        ida_kernwin.msg("Caffeinated\n")
+    if coffee and not coffee.is_dead():
+            coffee.die()
+            coffee = None
+            return
+    coffee = painter_t()
+    ida_kernwin.msg("Caffeinated\n")
 
 try:
     coffee
-    ida_kernwin.info("Already installed. Press %s to start/stop recording." % HOTKEY)
+    ida_kernwin.info("Already installed. Press %s" % HOTKEY)
 except:
     coffee = None
     print("Press %s for coffee overload" % HOTKEY)
