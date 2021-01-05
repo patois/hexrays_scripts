@@ -99,21 +99,18 @@ class painter_t(QtCore.QObject):
 def coffee_main():
     global coffee
 
-    try:
+    if coffee:
         coffee.die()
         del coffee
-    except:
+        coffee = None
+    else:
         coffee = painter_t()
         ida_kernwin.msg("Caffeinated\n")
 
 try:
-    coffee.die()
-    del coffee
+    coffee
+    ida_kernwin.info("Already installed. Press %s to start/stop recording." % HOTKEY)
 except:
-    pass
-finally:
     coffee = None
-
-print("Press %s for coffee overload" % HOTKEY)
-ida_kernwin.add_hotkey(HOTKEY, coffee_main)
-
+    print("Press %s for coffee overload" % HOTKEY)
+    ida_kernwin.add_hotkey(HOTKEY, coffee_main)

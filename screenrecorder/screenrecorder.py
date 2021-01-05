@@ -1,4 +1,3 @@
-
 import os
 
 from PyQt5 import QtCore
@@ -47,20 +46,14 @@ class screen_record_t(QtCore.QObject):
                 print("[!] Error saving file")
         return QtCore.QObject.eventFilter(self, receiver, event)
 
-try:
-    del sr
-except:
-    pass
-finally:
-    sr = None
-
 def sr_main():
     global sr
 
-    try:
+    if sr:
         del sr
+        sr = None
         print("Stopped recording")
-    except:
+    else:
         w = ida_kernwin.get_current_widget()
         title = "IDA View-A"
         if w:
@@ -72,6 +65,10 @@ def sr_main():
                 sr = screen_record_t(title, path)
                 print("Started recording")
 
-
-print("Press %s to start/stop recording" % HOTKEY)
-ida_kernwin.add_hotkey(HOTKEY, sr_main)
+try:
+    sr
+    ida_kernwin.info("Already installed. Press %s to start/stop recording." % HOTKEY)
+except:
+    sr = None
+    sr_hotkey = ida_kernwin.add_hotkey(HOTKEY, sr_main)  
+    print("Press %s to start/stop recording" % HOTKEY)

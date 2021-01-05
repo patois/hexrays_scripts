@@ -127,12 +127,9 @@ def pp_main():
                         print("PNGs playing in widget %s" % title)
 
 try:
-    pp.die()
-    del pp
+    pp
+    ida_kernwin.info("Already installed. Press %s to start/stop recording." % HOTKEY)
 except:
-    pass
-finally:
+    print("Press %s to start/stop playing PNG files" % HOTKEY)
+    ida_kernwin.add_hotkey(HOTKEY, pp_main)
     pp = None
-
-print("Press %s to start/stop playing PNG files" % HOTKEY)
-ida_kernwin.add_hotkey(HOTKEY, pp_main)
