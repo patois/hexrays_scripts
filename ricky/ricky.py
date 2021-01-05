@@ -10,6 +10,8 @@ import ida_kernwin
 # Ricky, a PNG sequence player for IDA Pro
 __author__ = "patois"
 
+HOTKEY = "Ctrl-Shift-P"
+
 # -------------------------------------------------------------------------
 def find_files(folder, wc):
     stuff = os.path.join(folder, wc)
@@ -100,15 +102,21 @@ class png_player_t(QtCore.QObject):
 
         return QtCore.QObject.eventFilter(self, receiver, event)
 
-if __name__ == "__main__":
+def pp_main():
+    global pp
+
     try:
         pp.die()
         del pp
         print("PNGs stopped playing")
     except:
-        title = ida_kernwin.ask_str("IDA View-A", 0, "Please specify title of widget")
+        w = ida_kernwin.get_current_widget()        
+        title = "IDA View-A"
+        if w:
+            title = ida_kernwin.get_widget_title(w)
+        title = ida_kernwin.ask_str(title, 0, "Please specify title of widget")
         if title:
-            path = ida_kernwin.ask_str("", ida_kernwin.HIST_DIR, "Please specify path containing png files")
+            path = ida_kernwin.ask_str("", ida_kernwin.HIST_DIR, "Please specify path containing png files to play back")
             if path and os.path.exists(path):
                 files = find_files(path, "*.png")
                 print("found %d files" % len(files))
@@ -116,4 +124,15 @@ if __name__ == "__main__":
                     interval = ida_kernwin.ask_long(200, "Please specify timer interval")
                     if interval:
                         pp = png_player_t(title, files, interval=interval)
-                        print("PNGs playing")
+                        print("PNGs playing in widget %s" % title)
+
+try:
+    pp.die()
+    del pp
+except:
+    pass
+finally:
+    pp = None
+
+print("Press %s to start/stop playing PNG files" % HOTKEY)
+ida_kernwin.add_hotkey(HOTKEY, pp_main)

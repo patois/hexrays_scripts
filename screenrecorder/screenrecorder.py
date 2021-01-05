@@ -12,6 +12,8 @@ from datetime import datetime
 # Screen (widget) recorder for IDA Pro
 __author__ = "patois"
 
+HOTKEY = "Ctrl-Shift-R"
+
 class screen_record_t(QtCore.QObject):
     def __init__(self, title, path):
         QtCore.QObject.__init__(self)
@@ -45,15 +47,31 @@ class screen_record_t(QtCore.QObject):
                 print("[!] Error saving file")
         return QtCore.QObject.eventFilter(self, receiver, event)
 
+try:
+    del sr
+except:
+    pass
+finally:
+    sr = None
 
-if __name__ == "__main__":
+def sr_main():
+    global sr
+
     try:
         del sr
         print("Stopped recording")
     except:
-        title = ida_kernwin.ask_str("IDA View-A", 0, "Please specify title of widget to capture")
+        w = ida_kernwin.get_current_widget()
+        title = "IDA View-A"
+        if w:
+            title = ida_kernwin.get_widget_title(w)
+        title = ida_kernwin.ask_str(title, 0, "Please specify title of widget to capture")
         if title:
             path = ida_kernwin.ask_str("", ida_kernwin.HIST_DIR, "Please specify destination path")
             if path and os.path.exists(path):
                 sr = screen_record_t(title, path)
                 print("Started recording")
+
+
+print("Press %s to start/stop recording" % HOTKEY)
+ida_kernwin.add_hotkey(HOTKEY, sr_main)

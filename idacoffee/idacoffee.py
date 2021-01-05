@@ -7,6 +7,8 @@ import ida_kernwin
 # IDA Coffee
 __author__ = "patois"
 
+HOTKEY = "Ctrl-Shift-C"
+
 # -------------------------------------------------------------------------
 class painter_t(QtCore.QObject):
     def __init__(self):
@@ -14,7 +16,10 @@ class painter_t(QtCore.QObject):
         name = "Coffee"
         w = ida_kernwin.find_widget("IDA View-%s" % name)
         if not w:
-            w = ida_kernwin.open_disasm_window(name)
+            w = ida_kernwin.get_current_widget()
+            if not w:
+                name = "Coffee"
+                w = ida_kernwin.open_disasm_window("IDA View-%s" % name)
         self.painting = False
         self.transform = False
         self.target = ida_kernwin.PluginForm.FormToPyQtWidget(w).viewport()
@@ -91,10 +96,24 @@ class painter_t(QtCore.QObject):
 
         return QtCore.QObject.eventFilter(self, receiver, event)
 
-if __name__ == "__main__":
+def coffee_main():
+    global coffee
+
     try:
         coffee.die()
         del coffee
     except:
         coffee = painter_t()
         ida_kernwin.msg("Caffeinated\n")
+
+try:
+    coffee.die()
+    del coffee
+except:
+    pass
+finally:
+    coffee = None
+
+print("Press %s for coffee overload" % HOTKEY)
+ida_kernwin.add_hotkey(HOTKEY, coffee_main)
+
