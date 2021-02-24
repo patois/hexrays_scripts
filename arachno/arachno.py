@@ -3,6 +3,7 @@ import ida_kernwin, ida_name, ida_funcs, ida_hexrays
 
 __author__ = "https://github.com/patois"
 
+SCRIPT_NAME = "arachno"
 
 def _get_identifier():
     """helper function"""
@@ -39,7 +40,25 @@ def google_item():
     name = _get_identifier()
     if name:
         webbrowser.open("http://google.com/search?q=%s" % name, new=2)
-    
-ida_kernwin.add_hotkey("Ctrl-Shift-F", google_item)
-ida_kernwin.add_hotkey("Ctrl-Shift-N", rename_func)
-print("arachno: hotkeys installed.")
+
+def toggle_install():
+    global INSTALLED_HOTKEYS
+
+    activated = False
+
+    try:
+        INSTALLED_HOTKEYS
+        for i in INSTALLED_HOTKEYS:
+            ida_kernwin.del_hotkey(i)
+        del INSTALLED_HOTKEYS
+    except:
+        INSTALLED_HOTKEYS = [handler for handler in [
+            ida_kernwin.add_hotkey("Ctrl-Shift-F", google_item),
+            ida_kernwin.add_hotkey("Ctrl-Shift-N", rename_func)]
+        ]
+        activated = True
+
+    return activated
+
+active = toggle_install()
+print("%s: hotkeys %sinstalled." % (SCRIPT_NAME, "" if active else "un"))
