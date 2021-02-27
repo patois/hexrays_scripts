@@ -1,3 +1,4 @@
+from PyQt5.Qt import QApplication
 import webbrowser
 import ida_kernwin, ida_name, ida_funcs, ida_hexrays
 
@@ -12,6 +13,14 @@ def _get_identifier():
     if r:
         return r[0]
     return None
+
+def copy_to_clipboard():
+    """copies current identifier to clipboard"""
+
+    name = _get_identifier()
+    if name:
+        QApplication.clipboard().setText(name)
+    return
 
 def rename_func():
     """gets textual representation of currently selected identifier
@@ -31,6 +40,7 @@ def rename_func():
                         vd = ida_hexrays.get_widget_vdui(cv)
                         if vd:
                             vd.refresh_view(True)
+    return
 
 def google_item():
     """gets textual representation of currently selected identifier
@@ -53,6 +63,7 @@ def toggle_install():
         del INSTALLED_HOTKEYS
     except:
         INSTALLED_HOTKEYS = [handler for handler in [
+            ida_kernwin.add_hotkey("Ctrl-Shift-C", copy_to_clipboard),
             ida_kernwin.add_hotkey("Ctrl-Shift-F", google_item),
             ida_kernwin.add_hotkey("Ctrl-Shift-N", rename_func)]
         ]
