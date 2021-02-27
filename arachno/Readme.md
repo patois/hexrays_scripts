@@ -3,5 +3,8 @@
 
 Add convenience hotkeys to IDA
 
-* Ctrl-Shift-F: with the cursor placed on an identifier, pressing this hotkey will open a browser tab with google results on the identifier
-* Ctrl-Shift-N: with the cursor placed on an identifier, pressing this hotkey will suggest the identifier as a new current function name
+With the cursor placed on an identifier...
+
+* Ctrl-Shift-C: ...pressing this hotkey will copy the current identifier to the clipboard
+* Ctrl-Shift-F: ...pressing this hotkey will open a browser tab with google results on the identifier
+* Ctrl-Shift-N: ...pressing this hotkey will suggest the identifier as a new current function name
