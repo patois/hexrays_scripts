@@ -22,6 +22,18 @@ def copy_to_clipboard():
         QApplication.clipboard().setText(name)
     return
 
+def make_name():
+    """renames current item
+
+    TODO:replace with custom implementation that allows
+    parameters such as name and flags ("create name anyway") to be set"""
+
+    cv = ida_kernwin.get_current_viewer()
+    if cv:
+        hx = ida_kernwin.get_widget_type(cv) == ida_kernwin.BWN_PSEUDOCODE
+        ida_kernwin.process_ui_action("hx:Rename" if hx else "MakeName")
+    return
+
 def rename_func():
     """gets textual representation of currently selected identifier
     from any current IDA view and suggests it as a new current
@@ -65,7 +77,8 @@ def toggle_install():
         INSTALLED_HOTKEYS = [handler for handler in [
             ida_kernwin.add_hotkey("Ctrl-Shift-C", copy_to_clipboard),
             ida_kernwin.add_hotkey("Ctrl-Shift-F", google_item),
-            ida_kernwin.add_hotkey("Ctrl-Shift-N", rename_func)]
+            ida_kernwin.add_hotkey("Ctrl-Shift-N", rename_func),
+            ida_kernwin.add_hotkey("Ctrl-Shift-V", make_name)]
         ]
         activated = True
 
