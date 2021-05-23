@@ -10,23 +10,31 @@ def _get_identifier():
     """helper function"""
     
     r = ida_kernwin.get_highlight(ida_kernwin.get_current_viewer())
-    if r:
-        return r[0]
-    return None
+    return r[0] if r else None
 
-def copy_to_clipboard():
-    """copies current identifier to clipboard"""
+def copy_item_to_clipboard():
+    """copy current identifier to clipboard"""
 
     name = _get_identifier()
     if name:
+        print("[%s]: copied item to clipboard:'%s'" % (SCRIPT_NAME, name))
         QApplication.clipboard().setText(name)
     return
 
-def make_name():
-    """renames current item
+def copy_ea_to_clipboard():
+    """copy current effective address to clipboard"""
 
-    TODO:replace with custom implementation that allows
-    parameters such as name and flags ("create name anyway") to be set"""
+    fmt = "%x" % ida_kernwin.get_screen_ea()
+    QApplication.clipboard().setText(fmt)
+    print("[%s]: copied ea to clipboard: '%s'" % (SCRIPT_NAME, fmt))
+    return
+
+def make_name():
+    """rename current item"""
+
+    """TODO:replace with custom implementation that allows
+    parameters such as name and flags ("create name anyway") to be set
+    """
 
     cv = ida_kernwin.get_current_viewer()
     if cv:
@@ -35,10 +43,7 @@ def make_name():
     return
 
 def rename_func():
-    """gets textual representation of currently selected identifier
-    from any current IDA view and suggests it as a new current
-    function name
-    """
+    """rename function, suggests current identifier as function name"""
 
     name = _get_identifier()
     if name:
@@ -55,13 +60,54 @@ def rename_func():
     return
 
 def google_item():
-    """gets textual representation of currently selected identifier
-    from any current IDA view, opens a new browser tab and googles for it
-    """
+    """google for currently selected identifier"""
 
     name = _get_identifier()
     if name:
         webbrowser.open("http://google.com/search?q=%s" % name, new=2)
+
+def print_help():
+    """print this help"""
+    global INSTALLED_HOTKEYS
+
+    s = []    
+    for _, item in INSTALLED_HOTKEYS.items():
+        hotkey, func = item
+        s.append("%s:\t%s" % (hotkey, func.__doc__.replace("\n", " ")))
+    print("\n%s %s help %s\n%s" % (40*"-", SCRIPT_NAME, 40*"-", "\n".join(s)))
+    return
+
+def install_hotkey(item):
+    global INSTALLED_HOTKEYS
+
+    hotkey, func = item
+    handler = ida_kernwin.add_hotkey(hotkey, func)
+    if handler:
+        INSTALLED_HOTKEYS[handler] = (hotkey, func)
+    return handler != None
+
+def install_hotkeys():
+    global INSTALLED_HOTKEYS
+
+    INSTALLED_HOTKEYS = {}
+    items = [("Ctrl-Shift-C", copy_item_to_clipboard),
+    ("Ctrl-Shift-F", google_item),
+    ("Ctrl-Shift-N", rename_func),
+    ("Ctrl-Shift-V", make_name),
+    ("Ctrl-Shift-E", copy_ea_to_clipboard),
+    ("Ctrl-Shift-H", print_help)]
+    for item in items:
+        if not install_hotkey(item):
+            print("[%s]: failed installing hotkey %s" % (SCRIPT_NAME, item[0]))
+    return
+
+def remove_hotkeys():
+    global INSTALLED_HOTKEYS
+
+    for i in INSTALLED_HOTKEYS:
+        ida_kernwin.del_hotkey(i)
+    del INSTALLED_HOTKEYS
+    return
 
 def toggle_install():
     global INSTALLED_HOTKEYS
@@ -70,19 +116,17 @@ def toggle_install():
 
     try:
         INSTALLED_HOTKEYS
-        for i in INSTALLED_HOTKEYS:
-            ida_kernwin.del_hotkey(i)
-        del INSTALLED_HOTKEYS
+        remove_hotkeys()
     except:
-        INSTALLED_HOTKEYS = [handler for handler in [
-            ida_kernwin.add_hotkey("Ctrl-Shift-C", copy_to_clipboard),
-            ida_kernwin.add_hotkey("Ctrl-Shift-F", google_item),
-            ida_kernwin.add_hotkey("Ctrl-Shift-N", rename_func),
-            ida_kernwin.add_hotkey("Ctrl-Shift-V", make_name)]
-        ]
+        install_hotkeys()
         activated = True
 
     return activated
 
-active = toggle_install()
-print("%s: hotkeys %sinstalled." % (SCRIPT_NAME, "" if active else "un"))
+if __name__ == "__main__":
+    active = toggle_install()
+    msg = "[%s]: hotkeys %sinstalled%s." % (
+        SCRIPT_NAME,
+        "" if active else "un",
+        " (press Ctrl-Shift-H for a list of hotkeys)" if active else "")
+    print("%s" % msg)
