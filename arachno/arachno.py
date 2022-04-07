@@ -77,13 +77,21 @@ def print_help():
     print("\n%s %s help %s\n%s" % (40*"-", SCRIPT_NAME, 40*"-", "\n".join(s)))
     return
 
-def jump_prev():
-    """return to previous saved position"""
+def navhistory_prev():
+    """jump to previous navigation history location"""
     ida_kernwin.process_ui_action("Return")
 
-def jump_next():
-    """go to next saved position"""
+def navhistory_next():
+    """jump to next navigation history location"""
     ida_kernwin.process_ui_action("UndoReturn")
+
+def func_prev():
+    """jump to previous function"""
+    ida_kernwin.process_ui_action("JumpPrevFunc")
+
+def func_next():
+    """jump to next functionm"""
+    ida_kernwin.process_ui_action("JumpNextFunc")
 
 def install_hotkey(item):
     global INSTALLED_HOTKEYS
@@ -104,8 +112,10 @@ def install_hotkeys():
     ("Ctrl-Shift-V", make_name),
     ("Ctrl-Shift-E", copy_ea_to_clipboard),
     ("Ctrl-Shift-H", print_help),
-    ("Alt-Left", jump_prev),
-    ("Alt-Right", jump_next)]
+    ("Alt-Left", navhistory_prev),
+    ("Alt-Right", navhistory_next),
+    ("Alt-Up", func_prev),
+    ("Alt-Down", func_next)]
     for item in items:
         if not install_hotkey(item):
             print("[%s]: failed installing hotkey %s" % (SCRIPT_NAME, item[0]))
