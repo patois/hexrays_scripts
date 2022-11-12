@@ -114,8 +114,8 @@ def install_hotkeys():
     ("Ctrl-Shift-H", print_help),
     ("Alt-Left", navhistory_prev),
     ("Alt-Right", navhistory_next),
-    ("Alt-Up", func_prev),
-    ("Alt-Down", func_next)]
+    ("Ctrl-Alt-Up", func_prev),
+    ("Ctrl-Alt-Down", func_next)]
     for item in items:
         if not install_hotkey(item):
             print("[%s]: failed installing hotkey %s" % (SCRIPT_NAME, item[0]))
