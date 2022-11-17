@@ -1,6 +1,7 @@
 from PyQt5.Qt import QApplication
 import webbrowser
 import ida_kernwin, ida_name, ida_funcs, ida_hexrays
+from ida_idaapi import BADADDR
 
 __author__ = "https://github.com/patois"
 
@@ -39,24 +40,51 @@ def make_name():
     cv = ida_kernwin.get_current_viewer()
     if cv:
         hx = ida_kernwin.get_widget_type(cv) == ida_kernwin.BWN_PSEUDOCODE
+        name = QApplication.clipboard().text()
+        if hx and len(name):
+            vd = ida_hexrays.get_widget_vdui(cv)
+            if vd.get_current_item(ida_hexrays.USE_KEYBOARD):
+                e = vd.item.e if vd.item.is_citem() else None
+                ea = ida_kernwin.get_screen_ea()
+                if e:
+                    if e.op is ida_hexrays.cot_var:
+                        var = vd.cfunc.mba.vars[e.v.idx]
+                        old_name = var.name
+                        eff_name = ida_kernwin.ask_str(name, 0, "new name for %s? " % old_name)
+                        if eff_name and vd.rename_lvar(var, eff_name, True):
+                            print("renamed: \"%s\" -> \"%s\"" % (old_name, name))
+                        return
+                    elif e.op is ida_hexrays.cot_obj:
+                        ea = e.obj_ea
+                    else:
+                        ea = e.ea
+                if ea != BADADDR:
+                    old_name = ida_name.get_name(ea)
+                    if old_name:
+                        eff_name = ida_kernwin.ask_str(name, 0, "new name for %s? " % old_name)
+                        if ida_name.set_name(ea, eff_name):
+                            print("renamed: \"%s\" -> \"%s\"" % (old_name, name))
+                        return
         ida_kernwin.process_ui_action("hx:Rename" if hx else "MakeName")
     return
 
-def rename_func():
+def rename_func(do_refresh=True):
     """rename function, suggests current identifier as function name"""
 
     name = _get_identifier()
     if name:
-        str = ida_kernwin.ask_str(name, -1, "Rename function")
-        if str:
+        _str = ida_kernwin.ask_str(name, -1, "Rename function")
+        if _str:
             f = ida_funcs.get_func(ida_kernwin.get_screen_ea())
             if f:
-                if ida_name.set_name(f.start_ea, str, ida_name.SN_NOCHECK):
-                    cv = ida_kernwin.get_current_viewer()
-                    if ida_kernwin.get_widget_type(cv) == ida_kernwin.BWN_PSEUDOCODE:
-                        vd = ida_hexrays.get_widget_vdui(cv)
-                        if vd:
-                            vd.refresh_view(True)
+                if ida_name.set_name(f.start_ea, _str, ida_name.SN_NOCHECK):
+                    print("renamed: %x -> \"%s\"" % (f.start_ea, _str))
+                    if do_refresh:
+                        cv = ida_kernwin.get_current_viewer()
+                        if ida_kernwin.get_widget_type(cv) == ida_kernwin.BWN_PSEUDOCODE:
+                            vd = ida_hexrays.get_widget_vdui(cv)
+                            if vd:
+                                vd.refresh_view(True)
     return
 
 def google_item():
@@ -70,7 +98,7 @@ def print_help():
     """print this help"""
     global INSTALLED_HOTKEYS
 
-    s = []    
+    s = list()
     for _, item in INSTALLED_HOTKEYS.items():
         hotkey, func = item
         s.append("%s:\t%s" % (hotkey, func.__doc__.replace("\n", " ")))
