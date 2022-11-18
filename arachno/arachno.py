@@ -6,13 +6,46 @@ from ida_idaapi import BADADDR
 __author__ = "https://github.com/patois"
 
 SCRIPT_NAME = "arachno"
+SEARCH_ENGINES = [
+    ("DuckDuckGo", "https://duckduckgo.com/?q="),
+    ("Google", "https://google.com/search?q="),
+    ("Bing", "https://www.bing.com/search?q=")]
+ACTIVE_SEARCH_ENGINE_IDX = None
 
+# ----------------------------------------------------------------------------
+class search_engine_chooser_t(ida_kernwin.Form):
+
+    def __init__(self, engines):
+        F = ida_kernwin.Form
+        F.__init__(
+            self,
+            r"""STARTITEM 0
+Search Engine
+
+<Which search engine would you like to use?: {dropDown1}>
+""", {
+            'dropDown1': F.DropdownListControl(
+                engines,
+                readonly=True)
+        })
+
+    @staticmethod
+    def select(engines):
+        f = search_engine_chooser_t(engines)
+        f.Compile()
+        ok = f.Execute()
+        result = None if not ok else f.dropDown1.value
+        f.Free()
+        return result
+
+# ----------------------------------------------------------------------------
 def _get_identifier():
     """helper function"""
     
     r = ida_kernwin.get_highlight(ida_kernwin.get_current_viewer())
     return r[0] if r else None
 
+# ----------------------------------------------------------------------------
 def copy_item_to_clipboard():
     """copy current identifier to clipboard"""
 
@@ -22,6 +55,7 @@ def copy_item_to_clipboard():
         QApplication.clipboard().setText(name)
     return
 
+# ----------------------------------------------------------------------------
 def copy_ea_to_clipboard():
     """copy current effective address to clipboard"""
 
@@ -30,12 +64,9 @@ def copy_ea_to_clipboard():
     print("[%s]: copied ea to clipboard: '%s'" % (SCRIPT_NAME, fmt))
     return
 
+# ----------------------------------------------------------------------------
 def make_name():
-    """rename current item"""
-
-    """TODO:replace with custom implementation that allows
-    parameters such as name and flags ("create name anyway") to be set
-    """
+    """rename current item, suggests name from clipboard contents"""
 
     cv = ida_kernwin.get_current_viewer()
     if cv:
@@ -68,6 +99,7 @@ def make_name():
         ida_kernwin.process_ui_action("hx:Rename" if hx else "MakeName")
     return
 
+# ----------------------------------------------------------------------------
 def rename_func(do_refresh=True):
     """rename function, suggests current identifier as function name"""
 
@@ -87,13 +119,25 @@ def rename_func(do_refresh=True):
                                 vd.refresh_view(True)
     return
 
-def google_item():
-    """google for currently selected identifier"""
+# ----------------------------------------------------------------------------
+def search_internet():
+    """search the Internet for occurences of the currently selected identifier"""
+    
+    global ACTIVE_SEARCH_ENGINE_IDX
+    if ACTIVE_SEARCH_ENGINE_IDX is None:
+        idx = search_engine_chooser_t.select([engine[0] for engine in SEARCH_ENGINES])
+        if idx is None:
+            return
+        ACTIVE_SEARCH_ENGINE_IDX = idx
 
     name = _get_identifier()
     if name:
-        webbrowser.open("http://google.com/search?q=%s" % name, new=2)
+        webbrowser.open("%s\"%s\"" % (
+            SEARCH_ENGINES[ACTIVE_SEARCH_ENGINE_IDX][1],
+            name),
+            new=2)
 
+# ----------------------------------------------------------------------------
 def print_help():
     """print this help"""
     global INSTALLED_HOTKEYS
@@ -105,22 +149,27 @@ def print_help():
     print("\n%s %s help %s\n%s" % (40*"-", SCRIPT_NAME, 40*"-", "\n".join(s)))
     return
 
+# ----------------------------------------------------------------------------
 def navhistory_prev():
     """jump to previous navigation history location"""
     ida_kernwin.process_ui_action("Return")
 
+# ----------------------------------------------------------------------------
 def navhistory_next():
     """jump to next navigation history location"""
     ida_kernwin.process_ui_action("UndoReturn")
 
+# ----------------------------------------------------------------------------
 def func_prev():
     """jump to previous function"""
     ida_kernwin.process_ui_action("JumpPrevFunc")
 
+# ----------------------------------------------------------------------------
 def func_next():
     """jump to next functionm"""
     ida_kernwin.process_ui_action("JumpNextFunc")
 
+# ----------------------------------------------------------------------------
 def install_hotkey(item):
     global INSTALLED_HOTKEYS
 
@@ -130,12 +179,13 @@ def install_hotkey(item):
         INSTALLED_HOTKEYS[handler] = (hotkey, func)
     return handler != None
 
+# ----------------------------------------------------------------------------
 def install_hotkeys():
     global INSTALLED_HOTKEYS
 
     INSTALLED_HOTKEYS = {}
     items = [("Ctrl-Shift-C", copy_item_to_clipboard),
-    ("Ctrl-Shift-F", google_item),
+    ("Ctrl-Shift-F", search_internet),
     ("Ctrl-Shift-N", rename_func),
     ("Ctrl-Shift-V", make_name),
     ("Ctrl-Shift-E", copy_ea_to_clipboard),
@@ -149,6 +199,7 @@ def install_hotkeys():
             print("[%s]: failed installing hotkey %s" % (SCRIPT_NAME, item[0]))
     return
 
+# ----------------------------------------------------------------------------
 def remove_hotkeys():
     global INSTALLED_HOTKEYS
 
@@ -157,6 +208,7 @@ def remove_hotkeys():
     del INSTALLED_HOTKEYS
     return
 
+# ----------------------------------------------------------------------------
 def toggle_install():
     global INSTALLED_HOTKEYS
 
@@ -171,6 +223,7 @@ def toggle_install():
 
     return activated
 
+# ----------------------------------------------------------------------------
 if __name__ == "__main__":
     active = toggle_install()
     msg = "[%s]: hotkeys %sinstalled%s." % (
