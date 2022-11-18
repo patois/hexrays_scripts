@@ -1,8 +1,24 @@
 
 # Arachno for IDA Pro / HexRays
 
-Add convenience hotkeys to IDA
+Arachno is an IDAPython script that enhances productivity by semi-automating and simplifying repetitive tasks.
+
+It currently adds the following convenience keyboard shortcuts to IDA/HexRays:
+
+```
+---------------------------------------- arachno help ----------------------------------------
+Ctrl-Shift-C:	copy current identifier to clipboard
+Ctrl-Shift-F:	google for currently selected identifier
+Ctrl-Shift-N:	rename function, suggests current identifier as function name
+Ctrl-Shift-V:	rename current item
+Ctrl-Shift-E:	copy current effective address to clipboard
+Ctrl-Shift-H:	print this help
+Alt-Left:	jump to previous navigation history location
+Alt-Right:	jump to next navigation history location
+Ctrl-Alt-Up:	jump to previous function
+Ctrl-Alt-Down:	jump to next functionm
+```
 
 ## Usage
 
-Run the script from within IDA and press Ctrl-Shift-H for help
+Running the script from within IDA installs a number of keyboard shortcuts by which above functionality is made available.
