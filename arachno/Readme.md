@@ -8,9 +8,9 @@ It currently adds the following convenience keyboard shortcuts to IDA/HexRays:
 ```
 ---------------------------------------- arachno help ----------------------------------------
 Ctrl-Shift-C:	copy current identifier to clipboard
-Ctrl-Shift-F:	google for currently selected identifier
+Ctrl-Shift-F:	search the Internet for occurences of the current identifier
 Ctrl-Shift-N:	rename function, suggests current identifier as function name
-Ctrl-Shift-V:	rename current item
+Ctrl-Shift-V:	rename current item, suggests name from clipboard contents
 Ctrl-Shift-E:	copy current effective address to clipboard
 Ctrl-Shift-H:	print this help
 Alt-Left:	jump to previous navigation history location
