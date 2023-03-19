@@ -103,20 +103,23 @@ def make_name():
 def rename_func(do_refresh=True):
     """rename function, suggests current identifier as function name"""
 
-    name = _get_identifier()
-    if name:
+    f = ida_funcs.get_func(ida_kernwin.get_screen_ea())
+    if f:
+        name = _get_identifier()
+        if not name:
+            name = ida_funcs.get_func_name(f.start_ea)
         _str = ida_kernwin.ask_str(name, -1, "Rename function")
-        if _str:
-            f = ida_funcs.get_func(ida_kernwin.get_screen_ea())
-            if f:
-                if ida_name.set_name(f.start_ea, _str, ida_name.SN_NOCHECK):
-                    print("renamed: %x -> \"%s\"" % (f.start_ea, _str))
-                    if do_refresh:
-                        cv = ida_kernwin.get_current_viewer()
-                        if ida_kernwin.get_widget_type(cv) == ida_kernwin.BWN_PSEUDOCODE:
-                            vd = ida_hexrays.get_widget_vdui(cv)
-                            if vd:
-                                vd.refresh_view(True)
+
+        if ida_name.set_name(f.start_ea, _str, ida_name.SN_NOCHECK):
+            print("renamed: %x -> \"%s\"" % (f.start_ea, _str))
+            if do_refresh:
+                cv = ida_kernwin.get_current_viewer()
+                if ida_kernwin.get_widget_type(cv) == ida_kernwin.BWN_PSEUDOCODE:
+                    vd = ida_hexrays.get_widget_vdui(cv)
+                    if vd:
+                        vd.refresh_view(True)
+        # else ...
+        # according to IDAPython docs, a warning is displayed upon failure
     return
 
 # ----------------------------------------------------------------------------
@@ -139,13 +142,13 @@ def search_internet():
 
 # ----------------------------------------------------------------------------
 def print_help():
-    """print this help"""
+    """show this help screen"""
     global INSTALLED_HOTKEYS
 
     s = list()
     for _, item in INSTALLED_HOTKEYS.items():
         hotkey, func = item
-        s.append("%s:\t%s" % (hotkey, func.__doc__.replace("\n", " ")))
+        s.append("%s:\t%s" % (hotkey+(max(20, len(hotkey))-len(hotkey))*" ", func.__doc__.replace("\n", " ")))
     print("\n%s %s help %s\n%s" % (40*"-", SCRIPT_NAME, 40*"-", "\n".join(s)))
     return
 
