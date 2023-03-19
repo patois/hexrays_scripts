@@ -169,7 +169,7 @@ def func_prev():
 
 # ----------------------------------------------------------------------------
 def func_next():
-    """jump to next functionm"""
+    """jump to next function"""
     ida_kernwin.process_ui_action("JumpNextFunc")
 
 # ----------------------------------------------------------------------------
